@@ -2,6 +2,7 @@
 //? Define the core mechanics: the bird’s movement (flap, gravity, drop)
 // Craft a responsive “flap” mechanism using event listeners to modify the bird’s velocity and simulate jumps.
 //? precise collision detection logic to determine when the bird touches obstacles or the canvas boundaries.
+// * Position of the bird is always centered
 
 // ? Integrate keyboard (space bar) touch events (mobile)
 // Provide immediate visual and audio feedback for events (collision, and game-over transitions)
@@ -28,3 +29,5 @@
 //verify that score resets and state transitions are robust.
 
 //persistent high scores using local storage
+
+// use image() onload event and call drawimage()

@@ -1,5 +1,7 @@
 * {
   font-size: 10px;
+  margin: 0;
+  padding: 0;
 }
 
 h1 {
@@ -7,5 +9,13 @@ h1 {
 }
 
 body {
-  background-color: lightblue;
+  background-color: #87ceeb;
+}
+canvas {
+  width: 700px;
+  height: 1000px;
+  background-image: url(images/background.png);
+
+  display: flex;
+  margin: auto;
 }

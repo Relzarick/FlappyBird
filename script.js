@@ -1,3 +1,46 @@
+const canvas = document.querySelector("#canvas");
+canvas.width = 700;
+canvas.height = 1000;
+
+const ctx = canvas.getContext("2d");
+
+const flappy = new Image();
+flappy.src = "images/bird.png";
+
+const backGround = new Image();
+backGround.src = "images/background.png";
+
+const ground = new Image();
+ground.src = "imges/ground.png";
+
+const pipes = new Image();
+pipes.src = "imges/pipe.png";
+
+const score = new Image();
+score.src = "imges/score.png";
+
+const restartBtn = new Image();
+restartBtn.src = "imges/restart.png";
+
+flappy.onload = () => {
+  ctx.drawImage(flappy, 200, 500);
+};
+
+// backGround.onload = () => {
+//   ctx.drawImage(backGround, 0, 0, canvas.width, canvas.height);
+// };
+
+const backGroundLoop = () => {
+  ctx.drawImage(backGround, 0, 0, canvas.width, canvas.height);
+  requestAnimationFrame(backGroundLoop);
+};
+
+const loadStatic = (src) => {
+  return new Promise((resolve, reject) => {});
+};
+
+backGroundLoop();
+
 // ! Development Guidelines
 //? Define the core mechanics: the bird’s movement (flap, gravity, drop)
 // Craft a responsive “flap” mechanism using event listeners to modify the bird’s velocity and simulate jumps.

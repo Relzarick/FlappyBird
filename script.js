@@ -4,42 +4,62 @@ canvas.height = 1000;
 
 const ctx = canvas.getContext("2d");
 
-const flappy = new Image();
-flappy.src = "images/bird.png";
+// t
+class Flappy {
+  constructor() {
+    this.src = "images/bird.png";
+  }
 
-const backGround = new Image();
-backGround.src = "images/background.png";
+  draw(ctx, x, y) {}
+}
 
-const ground = new Image();
-ground.src = "imges/ground.png";
+// t
+class SpriteLoader {
+  constructor(src) {
+    this.img = new Image();
+    this.src = src;
+    this.img.src = src;
+    this.isLoaded = false;
+  }
 
-const pipes = new Image();
-pipes.src = "imges/pipe.png";
+  async load() {
+    return new Promise((resolve, reject) => {
+      this.img.onload = () => {
+        this.isLoaded = true;
+        resolve(this.img);
+      };
+    });
+  }
 
-const score = new Image();
-score.src = "imges/score.png";
+  draw(ctx, x, y, width, height) {
+    // * Only draws once image is loaded
+    if (this.isLoaded) {
+      ctx.drawImage(this.img, x, y, width, height);
+    }
+  }
+}
 
-const restartBtn = new Image();
-restartBtn.src = "imges/restart.png";
-
-flappy.onload = () => {
-  ctx.drawImage(flappy, 200, 500);
+//  t
+const assetsPreLoader = async () => {
+  try {
+    await background.load();
+    gameLoop();
+  } catch (error) {
+    console.error(error);
+  }
 };
 
-// backGround.onload = () => {
-//   ctx.drawImage(backGround, 0, 0, canvas.width, canvas.height);
-// };
-
-const backGroundLoop = () => {
-  ctx.drawImage(backGround, 0, 0, canvas.width, canvas.height);
-  requestAnimationFrame(backGroundLoop);
+// t
+const gameLoop = () => {
+  background.draw(ctx, 0, 0, canvas.width, canvas.height);
+  requestAnimationFrame(gameLoop);
 };
 
-const loadStatic = (src) => {
-  return new Promise((resolve, reject) => {});
-};
+const flappy = new Flappy();
+const background = new SpriteLoader("images/background.png");
+const ground = new SpriteLoader("images/ground.png");
 
-backGroundLoop();
+assetsPreLoader();
 
 // ! Development Guidelines
 //? Define the core mechanics: the bird’s movement (flap, gravity, drop)

@@ -33,7 +33,7 @@ class SpriteLoader {
   }
 }
 
-class birdSprite extends SpriteLoader {
+class LoadBirdSprite extends SpriteLoader {
   constructor(source) {
     super(source);
 
@@ -45,11 +45,20 @@ class birdSprite extends SpriteLoader {
 
     this.totalSprite = 3;
     this.currentSprite = 0;
+
+    this.framesUpdateCounter = 0;
+    this.framesDelay = 12; // t This controls how fast the bird flaps
   }
 
-  updateFrameIndex() {
-    this.sourceX = this.currentSprite * this.spriteWidth; // t Gets the starting point of each sprite
-    this.currentSprite = (this.currentSprite + 1) % this.totalSprite;
+  updateFramesIndex() {
+    this.framesUpdateCounter++;
+
+    if (this.framesUpdateCounter >= this.framesDelay) {
+      this.sourceX = this.currentSprite * this.spriteWidth; // t Gets the starting point of each sprite
+      this.currentSprite = (this.currentSprite + 1) % this.totalSprite; // t Will transition to the next frame or reset
+
+      this.framesUpdateCounter = 0;
+    }
   }
 
   renderAnimations(ctx, x, y) {
@@ -65,9 +74,13 @@ class birdSprite extends SpriteLoader {
         this.width,
         this.height
       );
-      this.updateFrameIndex();
+      this.updateFramesIndex();
     }
   }
+}
+
+class LoadPipeSprite extends SpriteLoader {
+  // constructor(params) {}
 }
 
 //  t
@@ -77,10 +90,9 @@ canvas.width = 700;
 canvas.height = 1000;
 const ctx = canvas.getContext("2d");
 
-const flappy = new birdSprite("images/bird.png");
-// Each bird sprite is 92px wide
-
+const flappy = new LoadBirdSprite("images/bird.png");
 const background = new SpriteLoader("images/background.png");
+const pipes = new LoadPipeSprite("images/pipe.png");
 
 let groundOffset = 0;
 const ground = new SpriteLoader("images/ground.png");

@@ -1,25 +1,11 @@
-const canvas = document.querySelector("#canvas");
-canvas.width = 700;
-canvas.height = 1000;
-
-const ctx = canvas.getContext("2d");
-
-// t
-class Flappy {
-  constructor() {
-    this.src = "images/bird.png";
-  }
-
-  draw(ctx, x, y) {}
-}
-
-// t
 class SpriteLoader {
-  constructor(src) {
+  constructor(source) {
     this.img = new Image();
-    this.src = src;
-    this.img.src = src;
+    this.src = source;
+    this.img.src = source;
+
     this.isLoaded = false;
+    this.isLogged = false;
   }
 
   async load() {
@@ -31,33 +17,66 @@ class SpriteLoader {
     });
   }
 
-  draw(ctx, x, y, width, height) {
+  //
+
+  draw(ctx, x, y, width = this.img.width, height = this.img.height) {
     // * Only draws once image is loaded
     if (this.isLoaded) {
       ctx.drawImage(this.img, x, y, width, height);
+    } else if (!this.isLogged) {
+      console.log(`${this.src} is not loaded`);
+      this.isLogged = true;
     }
   }
 }
 
+// t
+
 //  t
+
+const canvas = document.querySelector("#canvas");
+canvas.width = 700;
+canvas.height = 1000;
+
+const ctx = canvas.getContext("2d");
+
+const flappy = new SpriteLoader("images/bird.png");
+const background = new SpriteLoader("images/background.png");
+
+let groundOffset = 0;
+const ground = new SpriteLoader("images/ground.png");
+
+//
+
+// * Load assets
 const assetsPreLoader = async () => {
   try {
-    await background.load();
+    await Promise.all([background.load(), ground.load(), flappy.load()]);
     gameLoop();
   } catch (error) {
     console.error(error);
   }
 };
 
-// t
+//
+
+// * Game Looping  Logic
 const gameLoop = () => {
-  background.draw(ctx, 0, 0, canvas.width, canvas.height);
+  background.draw(ctx, 0, -128, canvas.width, canvas.height);
+
+  flappy.draw(ctx, 200, 400);
+
+  // * Draw the ground sprite multiple times to cover the canvas width
+  for (let x = -groundOffset; x < canvas.width; x += ground.img.width) {
+    ground.draw(ctx, x, canvas.height - ground.img.height);
+  }
+
+  // Increments determines movement speed
+  // t when increasing the difficulty increase this number
+  groundOffset = (groundOffset + 1) % ground.img.width; // Wrap when reaching sprite width
+
   requestAnimationFrame(gameLoop);
 };
-
-const flappy = new Flappy();
-const background = new SpriteLoader("images/background.png");
-const ground = new SpriteLoader("images/ground.png");
 
 assetsPreLoader();
 

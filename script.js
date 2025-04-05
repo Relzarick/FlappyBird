@@ -95,11 +95,11 @@ class LoadPipeSprite extends SpriteLoader {
   }
 
   calcX() {
-    this.x -= this.speed;
+    this.x -= this.speed; // t Moves pipe leftward
     if (this.x + this.width < 0) {
       this.x = canvas.width; // t Resets horizontal position
-      this.y = undefined; // t Allows clacY() to set a new position
-      this.gap = undefined; // t Allows variation in gap size
+      this.y = undefined; // t Allows clacY() to set new position
+      this.gap = undefined; // t Allows clacGap() to set new gap
     }
     return this.x;
   }
@@ -123,15 +123,14 @@ class LoadPipeSprite extends SpriteLoader {
   renderPipe(ctx) {
     let x = this.calcX();
     let y = this.calcY();
-    let gap = this.clacGap(300, 200);
+    let gap = this.clacGap(300, 220);
 
     if (this.isLoaded) {
       ctx.save(); // t Save default img before alterations
       ctx.scale(1, -1); // t Flip Vertically
       ctx.drawImage(this.img, x, -y);
       ctx.restore(); // t Resets img before rendering lower pipe
-
-      pipes.draw(ctx, x, y + gap);
+      this.draw(ctx, x, y + gap);
     }
   }
 
@@ -147,7 +146,8 @@ const ctx = canvas.getContext("2d");
 
 const flappy = new LoadBirdSprite("images/bird.png");
 const background = new SpriteLoader("images/background.png");
-const pipes = new LoadPipeSprite("images/pipe.png");
+
+const pipesArray = [];
 
 let groundOffset = 0;
 const ground = new SpriteLoader("images/ground.png");
@@ -155,12 +155,7 @@ const ground = new SpriteLoader("images/ground.png");
 // * PreLoads Assets
 const assetsPreLoader = async () => {
   try {
-    await Promise.all([
-      background.load(),
-      ground.load(),
-      flappy.load(),
-      pipes.load(),
-    ]);
+    await Promise.all([background.load(), ground.load(), flappy.load()]);
     gameLoop();
   } catch (error) {
     console.error(error);
@@ -172,7 +167,18 @@ const gameLoop = () => {
   // t Ctx render order = z index order
   background.draw(ctx, 0, -128, canvas.width, canvas.height);
 
-  pipes.renderPipe(ctx);
+  pipesArray.forEach((pipe) => {
+    pipe.renderPipe(ctx);
+
+    if (pipe.x + pipe.width < 0) {
+      pipesArray.shift();
+    }
+  });
+
+  const lastPipe = pipesArray[pipesArray.length - 1];
+  if (!lastPipe || lastPipe.x < canvas.width - 300) {
+    spawnPipe();
+  }
 
   for (let x = -groundOffset; x < canvas.width; x += ground.img.width) {
     ground.draw(ctx, x, canvas.height - ground.img.height); // * Redraws the ground sprite to cover entire width
@@ -184,11 +190,15 @@ const gameLoop = () => {
   requestAnimationFrame(gameLoop);
 };
 
+const spawnPipe = async () => {
+  const newPipe = new LoadPipeSprite("images/pipe.png");
+  await newPipe.load();
+  pipesArray.push(newPipe);
+};
+
 //
 
 assetsPreLoader();
-
-//
 
 // ! Development Guidelines
 //? Define the core mechanics: the bird’s movement (flap, gravity, drop)

@@ -113,7 +113,7 @@ class LoadPipeSprite extends SpriteLoader {
 
   clacGap(max, min) {
     if (this.gap === undefined) {
-      this.gap = Math.floor(Math.random() * (max - min) + min);
+      this.gap = Math.random() * (max - min) + min;
     }
     return this.gap;
   }
@@ -147,10 +147,10 @@ const ctx = canvas.getContext("2d");
 const flappy = new LoadBirdSprite("images/bird.png");
 const background = new SpriteLoader("images/background.png");
 
-const pipesArray = [];
-
 let groundOffset = 0;
 const ground = new SpriteLoader("images/ground.png");
+
+let pipesArray = [];
 
 // * PreLoads Assets
 const assetsPreLoader = async () => {
@@ -162,38 +162,37 @@ const assetsPreLoader = async () => {
   }
 };
 
-// * Game Looping Logic
-const gameLoop = () => {
-  // t Ctx render order = z index order
-  background.draw(ctx, 0, -128, canvas.width, canvas.height);
-
-  pipesArray.forEach((pipe) => {
-    pipe.renderPipe(ctx);
-
-    if (pipe.x + pipe.width < 0) {
-      pipesArray.shift();
-    }
-  });
-
-  const lastPipe = pipesArray[pipesArray.length - 1];
-  if (!lastPipe || lastPipe.x < canvas.width - 300) {
-    spawnPipe();
-  }
-
-  for (let x = -groundOffset; x < canvas.width; x += ground.img.width) {
-    ground.draw(ctx, x, canvas.height - ground.img.height); // * Redraws the ground sprite to cover entire width
-  }
-  groundOffset = (groundOffset + 1) % ground.img.width; // * Increments determines speed
-
-  flappy.renderAnimations(ctx, 200, 400);
-
-  requestAnimationFrame(gameLoop);
-};
-
 const spawnPipe = async () => {
   const newPipe = new LoadPipeSprite("images/pipe.png");
   await newPipe.load();
+
   pipesArray.push(newPipe);
+};
+
+// * Game Looping Logic
+const gameLoop = async () => {
+  // t Ctx render order = z index
+  background.draw(ctx, 0, -128, canvas.width, canvas.height);
+
+  pipesArray.forEach((pipe) => pipe.renderPipe(ctx));
+  pipesArray = pipesArray.filter((pipe) => pipe.x + pipe.width > 0); // t Filter removes off screen pipe
+
+  const lastPipe = pipesArray[pipesArray.length - 1];
+  if (!lastPipe || lastPipe.x + lastPipe.width < 292) {
+    // t Checks if rightmost edge of last generated pipe has past Flappy
+    await spawnPipe();
+  }
+
+  // !
+
+  flappy.renderAnimations(ctx, 200, 400);
+
+  for (let x = -groundOffset; x < canvas.width; x += ground.img.width) {
+    ground.draw(ctx, x, canvas.height - ground.img.height); // t Redraws the ground sprite to cover entire width
+  }
+  groundOffset = (groundOffset + 1) % ground.img.width; // t Increments determines speed
+
+  requestAnimationFrame(gameLoop);
 };
 
 //
@@ -204,14 +203,9 @@ assetsPreLoader();
 //? Define the core mechanics: the bird’s movement (flap, gravity, drop)
 // Craft a responsive “flap” mechanism using event listeners to modify the bird’s velocity and simulate jumps.
 //? precise collision detection logic to determine when the bird touches obstacles or the canvas boundaries.
-// * Position of the bird is always centered
 
 // ? Integrate keyboard (space bar) touch events (mobile)
 // Provide immediate visual and audio feedback for events (collision, and game-over transitions)
-
-// t Set up an HTML5 <canvas> for drawing and animation
-// Initializing the 2D rendering context for smoother graphics.
-// ? Manage the animation loop with requestAnimationFrame to ensure consistent frame rates and performance
 
 //? obstacle generation (pipes) with varying gaps and positions. (increase difficulty as score increases)
 // Design an algorithm to generate and recycle pipes dynamically.

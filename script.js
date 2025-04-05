@@ -24,8 +24,7 @@ class SpriteLoader {
     });
   }
 
-  //
-
+  // t Specify width or height to change scale
   draw(ctx, x, y, width = this.width, height = this.height) {
     // * Draws only when loaded
     if (this.isLoaded) {
@@ -86,17 +85,60 @@ class LoadBirdSprite extends SpriteLoader {
 class LoadPipeSprite extends SpriteLoader {
   constructor(source) {
     super(source);
+
+    this.x = canvas.width;
+    this.y = undefined;
+    this.gap = undefined;
+    this.speed = 1;
+
+    // * Sprite range width should be 120 to 170 ||138(Default)
   }
-  // t Each pipe img must have mirror pipe on top
-  // t Must have gap inbetween pipes
+
+  calcX() {
+    this.x -= this.speed;
+    if (this.x + this.width < 0) {
+      this.x = canvas.width; // t Resets horizontal position
+      this.y = undefined; // t Allows clacY() to set a new position
+      this.gap = undefined; // t Allows variation in gap size
+    }
+    return this.x;
+  }
+
+  calcY() {
+    if (this.y === undefined) {
+      this.y = Math.floor(Math.random() * 500 + 100);
+    }
+    return this.y;
+  }
+
+  clacGap(max, min) {
+    if (this.gap === undefined) {
+      this.gap = Math.floor(Math.random() * (max - min) + min);
+    }
+    return this.gap;
+  }
+
+  calcSpeed() {}
+
+  renderPipe(ctx) {
+    let x = this.calcX();
+    let y = this.calcY();
+    let gap = this.clacGap(300, 200);
+
+    if (this.isLoaded) {
+      ctx.save(); // t Save default img before alterations
+      ctx.scale(1, -1); // t Flip Vertically
+      ctx.drawImage(this.img, x, -y);
+      ctx.restore(); // t Resets img before rendering lower pipe
+
+      pipes.draw(ctx, x, y + gap);
+    }
+  }
+
   // t gap is determined by score (reduce gap every 10 passed, maxed at certain amount)
   // t distance between pipes are determined by score while staying random
   // t speed is determined by score
-
-  // t learn how to set hitboxes
 }
-
-//  t
 
 const canvas = document.querySelector("#canvas");
 canvas.width = 700;
@@ -109,8 +151,6 @@ const pipes = new LoadPipeSprite("images/pipe.png");
 
 let groundOffset = 0;
 const ground = new SpriteLoader("images/ground.png");
-
-//
 
 // * PreLoads Assets
 const assetsPreLoader = async () => {
@@ -127,24 +167,22 @@ const assetsPreLoader = async () => {
   }
 };
 
-//
-
 // * Game Looping Logic
 const gameLoop = () => {
+  // t Ctx render order = z index order
   background.draw(ctx, 0, -128, canvas.width, canvas.height);
+
+  pipes.renderPipe(ctx);
 
   for (let x = -groundOffset; x < canvas.width; x += ground.img.width) {
     ground.draw(ctx, x, canvas.height - ground.img.height); // * Redraws the ground sprite to cover entire width
   }
-
   groundOffset = (groundOffset + 1) % ground.img.width; // * Increments determines speed
 
   flappy.renderAnimations(ctx, 200, 400);
 
   requestAnimationFrame(gameLoop);
 };
-
-const gravity = () => {};
 
 //
 

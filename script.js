@@ -7,14 +7,18 @@ class SpriteLoader {
     this.isLoaded = false;
     this.isLogged = false;
 
-    this.width = this.img.width;
-    this.height = this.img.height;
+    this.width = 0;
+    this.height = 0;
   }
 
   async load() {
     return new Promise((resolve, reject) => {
       this.img.onload = () => {
         this.isLoaded = true;
+
+        this.width = this.img.width;
+        this.height = this.img.height;
+
         resolve(this.img);
       };
     });
@@ -23,7 +27,7 @@ class SpriteLoader {
   //
 
   draw(ctx, x, y, width = this.width, height = this.height) {
-    // * Only draws once image is loaded
+    // * Draws only when loaded
     if (this.isLoaded) {
       ctx.drawImage(this.img, x, y, width, height);
     } else if (!this.isLogged) {
@@ -40,14 +44,14 @@ class LoadBirdSprite extends SpriteLoader {
     this.spriteWidth = 92;
     this.sourceX = 0;
 
-    this.width = 92;
-    this.height = 64;
+    this.frameWidth = 92; // t Controls the width of each frame
+    this.frameHeight = 64; // t Controls the height of each frame
 
     this.totalSprite = 3;
     this.currentSprite = 0;
 
     this.framesUpdateCounter = 0;
-    this.framesDelay = 12; // t This controls how fast the bird flaps
+    this.framesDelay = 12; // t This controls animation speed
   }
 
   updateFramesIndex() {
@@ -55,7 +59,7 @@ class LoadBirdSprite extends SpriteLoader {
 
     if (this.framesUpdateCounter >= this.framesDelay) {
       this.sourceX = this.currentSprite * this.spriteWidth; // t Gets the starting point of each sprite
-      this.currentSprite = (this.currentSprite + 1) % this.totalSprite; // t Will transition to the next frame or reset
+      this.currentSprite = (this.currentSprite + 1) % this.totalSprite; // t Transition to next frame or reset
 
       this.framesUpdateCounter = 0;
     }
@@ -68,11 +72,11 @@ class LoadBirdSprite extends SpriteLoader {
         this.sourceX,
         0,
         this.spriteWidth,
-        this.height,
+        this.frameHeight,
         x,
         y,
-        this.width,
-        this.height
+        this.frameWidth,
+        this.frameHeight
       );
       this.updateFramesIndex();
     }
@@ -80,7 +84,16 @@ class LoadBirdSprite extends SpriteLoader {
 }
 
 class LoadPipeSprite extends SpriteLoader {
-  // constructor(params) {}
+  constructor(source) {
+    super(source);
+  }
+  // t Each pipe img must have mirror pipe on top
+  // t Must have gap inbetween pipes
+  // t gap is determined by score (reduce gap every 10 passed, maxed at certain amount)
+  // t distance between pipes are determined by score while staying random
+  // t speed is determined by score
+
+  // t learn how to set hitboxes
 }
 
 //  t
@@ -99,10 +112,15 @@ const ground = new SpriteLoader("images/ground.png");
 
 //
 
-// * Load assets
+// * PreLoads Assets
 const assetsPreLoader = async () => {
   try {
-    await Promise.all([background.load(), ground.load(), flappy.load()]);
+    await Promise.all([
+      background.load(),
+      ground.load(),
+      flappy.load(),
+      pipes.load(),
+    ]);
     gameLoop();
   } catch (error) {
     console.error(error);
@@ -111,20 +129,17 @@ const assetsPreLoader = async () => {
 
 //
 
-// * Game Looping  Logic
+// * Game Looping Logic
 const gameLoop = () => {
   background.draw(ctx, 0, -128, canvas.width, canvas.height);
 
-  flappy.renderAnimations(ctx, 200, 400);
-
-  // * Draw the ground sprite multiple times to cover the canvas width
   for (let x = -groundOffset; x < canvas.width; x += ground.img.width) {
-    ground.draw(ctx, x, canvas.height - ground.img.height);
+    ground.draw(ctx, x, canvas.height - ground.img.height); // * Redraws the ground sprite to cover entire width
   }
 
-  // Increments determines movement speed
-  // t when increasing the difficulty increase this number
-  groundOffset = (groundOffset + 1) % ground.img.width; // Wrap when reaching sprite width
+  groundOffset = (groundOffset + 1) % ground.img.width; // * Increments determines speed
+
+  flappy.renderAnimations(ctx, 200, 400);
 
   requestAnimationFrame(gameLoop);
 };

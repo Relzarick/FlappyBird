@@ -11,10 +11,11 @@ class SpriteLoader {
     this.height = 0;
   }
 
+  // load assets
   async load() {
     return new Promise((resolve, reject) => {
       this.img.onload = () => {
-        this.isLoaded = true;
+        this.isLoaded = true; // t program only draws if img is loaded
 
         this.width = this.img.width;
         this.height = this.img.height;
@@ -94,6 +95,7 @@ class LoadPipeSprite extends SpriteLoader {
     // * Sprite range width should be 120 to 170 ||138(Default)
   }
 
+  // * Handles the calculation for shifting pipes from right to left
   calcX() {
     this.x -= this.speed; // t Moves pipe leftward
     if (this.x + this.width < 0) {
@@ -104,6 +106,7 @@ class LoadPipeSprite extends SpriteLoader {
     return this.x;
   }
 
+  // * Calculates the height of the pipes
   calcY() {
     if (this.y === undefined) {
       this.y = Math.floor(Math.random() * 500 + 100);
@@ -111,6 +114,7 @@ class LoadPipeSprite extends SpriteLoader {
     return this.y;
   }
 
+  // * Determines a randomized gap between pipes
   clacGap(max, min) {
     if (this.gap === undefined) {
       this.gap = Math.random() * (max - min) + min;
@@ -118,6 +122,7 @@ class LoadPipeSprite extends SpriteLoader {
     return this.gap;
   }
 
+  // * Will be used to determine speed scaling it with score
   calcSpeed() {}
 
   renderPipe(ctx) {
@@ -130,13 +135,12 @@ class LoadPipeSprite extends SpriteLoader {
       ctx.scale(1, -1); // t Flip Vertically
       ctx.drawImage(this.img, x, -y);
       ctx.restore(); // t Resets img before rendering lower pipe
-      this.draw(ctx, x, y + gap);
+      this.draw(ctx, x, y + gap); // t Bottom pipe
     }
   }
 
   // t gap is determined by score (reduce gap every 10 passed, maxed at certain amount)
   // t distance between pipes are determined by score while staying random
-  // t speed is determined by score
 }
 
 const canvas = document.querySelector("#canvas");
@@ -156,12 +160,13 @@ let pipesArray = [];
 const assetsPreLoader = async () => {
   try {
     await Promise.all([background.load(), ground.load(), flappy.load()]);
-    gameLoop();
+    gameLoop(); // t Only start gameloop once all ctx are loaded
   } catch (error) {
     console.error(error);
   }
 };
 
+// * Creates new pipe classes and pushes to array
 const spawnPipe = async () => {
   const newPipe = new LoadPipeSprite("images/pipe.png");
   await newPipe.load();
@@ -170,12 +175,13 @@ const spawnPipe = async () => {
 };
 
 // * Game Looping Logic
+//  Order in which ctx are drawn determines the Z index
 const gameLoop = async () => {
-  // t Ctx render order = z index
   background.draw(ctx, 0, -128, canvas.width, canvas.height);
 
-  pipesArray.forEach((pipe) => pipe.renderPipe(ctx));
-  pipesArray = pipesArray.filter((pipe) => pipe.x + pipe.width > 0); // t Filter removes off screen pipe
+  // ! Pipe logic
+  pipesArray.forEach((pipe) => pipe.renderPipe(ctx)); // t runs the rendering logic for each pipe in the array
+  pipesArray = pipesArray.filter((pipe) => pipe.x + pipe.width > 0); // t Eemoves off screen pipe
 
   const lastPipe = pipesArray[pipesArray.length - 1];
   if (!lastPipe || lastPipe.x + lastPipe.width < 292) {
@@ -195,8 +201,6 @@ const gameLoop = async () => {
   requestAnimationFrame(gameLoop);
 };
 
-//
-
 assetsPreLoader();
 
 // ! Development Guidelines
@@ -208,7 +212,6 @@ assetsPreLoader();
 // Provide immediate visual and audio feedback for events (collision, and game-over transitions)
 
 //? obstacle generation (pipes) with varying gaps and positions. (increase difficulty as score increases)
-// Design an algorithm to generate and recycle pipes dynamically.
 // Implement a scoring system.
 
 // ! Testing
@@ -217,7 +220,6 @@ assetsPreLoader();
 //Test that gravity, velocity, and the flap mechanism produce expected position changes.
 //Test that event listeners correctly respond to user input, triggering the flap action reliably.
 
-//Ensure the animation loop consistently invokes requestAnimationFrame without performance lag.
 //Check behavior when the bird nearly touches obstacles or screen boundaries to ensure correct detection
 //verify that score resets and state transitions are robust.
 

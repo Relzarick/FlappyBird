@@ -176,7 +176,7 @@ const spawnPipe = async () => {
 
 // * Game Looping Logic
 //  Order in which ctx are drawn determines the Z index
-const gameLoop = async () => {
+const gameLoop = () => {
   background.draw(ctx, 0, -128, canvas.width, canvas.height);
 
   // ! Pipe logic
@@ -186,13 +186,14 @@ const gameLoop = async () => {
   const lastPipe = pipesArray[pipesArray.length - 1];
   if (!lastPipe || lastPipe.x + lastPipe.width < 292) {
     // t Checks if rightmost edge of last generated pipe has past Flappy
-    await spawnPipe();
+    spawnPipe();
   }
 
   // !
 
   flappy.renderAnimations(ctx, 200, 400);
 
+  // ! Ground logic
   for (let x = -groundOffset; x < canvas.width; x += ground.img.width) {
     ground.draw(ctx, x, canvas.height - ground.img.height); // t Redraws the ground sprite to cover entire width
   }

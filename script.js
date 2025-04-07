@@ -1,7 +1,7 @@
 class SpriteLoader {
   constructor(source) {
     this.img = new Image();
-    this.src = source;
+    this.src = source; // t This is for logging purposes
     this.img.src = source;
 
     this.isLoaded = false;
@@ -17,6 +17,7 @@ class SpriteLoader {
       this.img.onload = () => {
         this.isLoaded = true; // t program only draws if img is loaded
 
+        // t Sets size to sprite size
         this.width = this.img.width;
         this.height = this.img.height;
 
@@ -26,12 +27,12 @@ class SpriteLoader {
   }
 
   // t Specify width or height to change scale
+  // * Draws only when loaded
   draw(ctx, x, y, width = this.width, height = this.height) {
-    // * Draws only when loaded
     if (this.isLoaded) {
       ctx.drawImage(this.img, x, y, width, height);
     } else if (!this.isLogged) {
-      console.log(`${this.src} is not loaded`);
+      console.log(`${this.src} is not loaded`); // t Logs which img is not loading
       this.isLogged = true;
     }
   }
@@ -90,7 +91,7 @@ class LoadPipeSprite extends SpriteLoader {
     this.x = canvas.width;
     this.y = undefined;
     this.gap = undefined;
-    this.speed = 1;
+    this.speed = 4;
 
     // * Sprite range width should be 120 to 170 ||138(Default)
   }
@@ -98,10 +99,12 @@ class LoadPipeSprite extends SpriteLoader {
   // * Handles the calculation for shifting pipes from right to left
   calcX() {
     this.x -= this.speed; // t Moves pipe leftward
+
+    // * Checks if pipes are off screen
     if (this.x + this.width < 0) {
       this.x = canvas.width; // t Resets horizontal position
-      this.y = undefined; // t Allows clacY() to set new position
-      this.gap = undefined; // t Allows clacGap() to set new gap
+      this.y = undefined; // t Allows clacY() to reset position
+      this.gap = undefined; // t Allows clacGap() to reset gap
     }
     return this.x;
   }
@@ -128,7 +131,10 @@ class LoadPipeSprite extends SpriteLoader {
   renderPipe(ctx) {
     let x = this.calcX();
     let y = this.calcY();
-    let gap = this.clacGap(300, 220);
+    let gap = this.clacGap(300, 200);
+
+    // if (pipesArray[pipesArray.length - 1].x) {
+    //  }
 
     if (this.isLoaded) {
       ctx.save(); // t Save default img before alterations
@@ -149,6 +155,7 @@ canvas.height = 1000;
 const ctx = canvas.getContext("2d");
 
 const flappy = new LoadBirdSprite("images/bird.png");
+const flappyPosition = 200;
 const background = new SpriteLoader("images/background.png");
 
 let groundOffset = 0;
@@ -180,18 +187,24 @@ const gameLoop = () => {
   background.draw(ctx, 0, -128, canvas.width, canvas.height);
 
   // ! Pipe logic
-  pipesArray.forEach((pipe) => pipe.renderPipe(ctx)); // t runs the rendering logic for each pipe in the array
-  pipesArray = pipesArray.filter((pipe) => pipe.x + pipe.width > 0); // t Eemoves off screen pipe
+  pipesArray.forEach((pipe) => pipe.renderPipe(ctx)); // t Runs the rendering logic for indivdual pipe in the array
+  pipesArray = pipesArray.filter((pipe) => pipe.x + pipe.width > 0); // t Removes off screen pipe
 
-  const lastPipe = pipesArray[pipesArray.length - 1];
-  if (!lastPipe || lastPipe.x + lastPipe.width < 292) {
-    // t Checks if rightmost edge of last generated pipe has past Flappy
+  const lastPipe = pipesArray[pipesArray.length - 1]; // t Gets the last pipe in array
+
+  // If there are no pipes, or if last pipe + width of pipe has passed flappy
+  // .some() checks is any pipe is within stipulated coordinate, only spawns if there is not
+  if (
+    !lastPipe ||
+    (lastPipe.x + lastPipe.width < flappyPosition + 92 &&
+      !pipesArray.some(
+        (pipe) => pipe.x + pipe.width >= canvas.width - pipe.width
+      ))
+  ) {
     spawnPipe();
   }
 
-  // !
-
-  flappy.renderAnimations(ctx, 200, 400);
+  flappy.renderAnimations(ctx, flappyPosition, 400);
 
   // ! Ground logic
   for (let x = -groundOffset; x < canvas.width; x += ground.img.width) {

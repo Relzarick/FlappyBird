@@ -91,7 +91,7 @@ class LoadPipeSprite extends SpriteLoader {
     this.x = canvas.width;
     this.y = undefined;
     this.gap = undefined;
-    this.speed = 4;
+    this.speed = 5;
 
     // * Sprite range width should be 120 to 170 ||138(Default)
   }
@@ -133,9 +133,7 @@ class LoadPipeSprite extends SpriteLoader {
     let y = this.calcY();
     let gap = this.clacGap(300, 200);
 
-    // if (pipesArray[pipesArray.length - 1].x) {
-    //  }
-
+    // t Check if right side of any pipes - left side of generated pipe is less than min gap
     if (this.isLoaded) {
       ctx.save(); // t Save default img before alterations
       ctx.scale(1, -1); // t Flip Vertically
@@ -162,6 +160,7 @@ let groundOffset = 0;
 const ground = new SpriteLoader("images/ground.png");
 
 let pipesArray = [];
+let initFirstPipe = false;
 
 // * PreLoads Assets
 const assetsPreLoader = async () => {
@@ -176,9 +175,28 @@ const assetsPreLoader = async () => {
 // * Creates new pipe classes and pushes to array
 const spawnPipe = async () => {
   const newPipe = new LoadPipeSprite("images/pipe.png");
+  const spawnRegion = canvas.width - newPipe.width;
+  console.log(newPipe.width);
+  //! WHY IS NEWPIPE.WIDTH 0!!!!
+  // ! this is the bugggggg!!!!!!!!
+
   await newPipe.load();
 
-  pipesArray.push(newPipe);
+  // t Spawn the first instance in the array
+  if (!initFirstPipe) {
+    pipesArray.push(newPipe);
+    initFirstPipe = true;
+  }
+
+  if (
+    !newPipe.x + newPipe.width > canvas.width - newPipe.width &&
+    pipesArray[pipesArray.length - 1].x + newPipe.width <
+      canvas.width - newPipe.width
+  ) {
+    pipesArray.push(newPipe);
+  } else {
+  }
+  // console.log(newPipe);
 };
 
 // * Game Looping Logic
@@ -187,6 +205,7 @@ const gameLoop = () => {
   background.draw(ctx, 0, -128, canvas.width, canvas.height);
 
   // ! Pipe logic
+
   pipesArray.forEach((pipe) => pipe.renderPipe(ctx)); // t Runs the rendering logic for indivdual pipe in the array
   pipesArray = pipesArray.filter((pipe) => pipe.x + pipe.width > 0); // t Removes off screen pipe
 

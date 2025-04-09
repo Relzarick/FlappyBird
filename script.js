@@ -91,7 +91,7 @@ class LoadPipeSprite extends SpriteLoader {
     this.x = canvas.width;
     this.y = undefined;
     this.gap = undefined;
-    this.speed = 5;
+    this.speed = 2;
 
     // * Sprite range width should be 120 to 170 ||138(Default)
   }
@@ -131,7 +131,7 @@ class LoadPipeSprite extends SpriteLoader {
   renderPipe(ctx) {
     let x = this.calcX();
     let y = this.calcY();
-    let gap = this.clacGap(300, 200);
+    let gap = this.clacGap(320, 200);
 
     // t Check if right side of any pipes - left side of generated pipe is less than min gap
     if (this.isLoaded) {
@@ -142,9 +142,6 @@ class LoadPipeSprite extends SpriteLoader {
       this.draw(ctx, x, y + gap); // t Bottom pipe
     }
   }
-
-  // t gap is determined by score (reduce gap every 10 passed, maxed at certain amount)
-  // t distance between pipes are determined by score while staying random
 }
 
 const canvas = document.querySelector("#canvas");
@@ -161,6 +158,8 @@ const ground = new SpriteLoader("images/ground.png");
 
 let pipesArray = [];
 let initFirstPipe = false;
+const spawnRegion = 562;
+const pipeWidth = 138;
 
 // * PreLoads Assets
 const assetsPreLoader = async () => {
@@ -175,28 +174,22 @@ const assetsPreLoader = async () => {
 // * Creates new pipe classes and pushes to array
 const spawnPipe = async () => {
   const newPipe = new LoadPipeSprite("images/pipe.png");
-  const spawnRegion = canvas.width - newPipe.width;
-  console.log(newPipe.width);
-  //! WHY IS NEWPIPE.WIDTH 0!!!!
-  // ! this is the bugggggg!!!!!!!!
-
   await newPipe.load();
+  pipesArray.push(newPipe);
+};
 
-  // t Spawn the first instance in the array
+const pipefunc = async () => {
   if (!initFirstPipe) {
-    pipesArray.push(newPipe);
     initFirstPipe = true;
+    await spawnPipe(); // t Adds the first pipe into array
   }
 
-  if (
-    !newPipe.x + newPipe.width > canvas.width - newPipe.width &&
-    pipesArray[pipesArray.length - 1].x + newPipe.width <
-      canvas.width - newPipe.width
-  ) {
-    pipesArray.push(newPipe);
-  } else {
+  for (let i = 0; i < pipesArray.length; i++) {
+    if (pipesArray.length < 2 && pipesArray[i].x < flappyPosition) {
+      await spawnPipe();
+    }
+    pipesArray[i].renderPipe(ctx); // t Renders each pipe in array
   }
-  // console.log(newPipe);
 };
 
 // * Game Looping Logic
@@ -204,24 +197,7 @@ const spawnPipe = async () => {
 const gameLoop = () => {
   background.draw(ctx, 0, -128, canvas.width, canvas.height);
 
-  // ! Pipe logic
-
-  pipesArray.forEach((pipe) => pipe.renderPipe(ctx)); // t Runs the rendering logic for indivdual pipe in the array
-  pipesArray = pipesArray.filter((pipe) => pipe.x + pipe.width > 0); // t Removes off screen pipe
-
-  const lastPipe = pipesArray[pipesArray.length - 1]; // t Gets the last pipe in array
-
-  // If there are no pipes, or if last pipe + width of pipe has passed flappy
-  // .some() checks is any pipe is within stipulated coordinate, only spawns if there is not
-  if (
-    !lastPipe ||
-    (lastPipe.x + lastPipe.width < flappyPosition + 92 &&
-      !pipesArray.some(
-        (pipe) => pipe.x + pipe.width >= canvas.width - pipe.width
-      ))
-  ) {
-    spawnPipe();
-  }
+  pipefunc();
 
   flappy.renderAnimations(ctx, flappyPosition, 400);
 

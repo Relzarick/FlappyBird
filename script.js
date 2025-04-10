@@ -91,6 +91,7 @@ class LoadPipeSprite extends SpriteLoader {
     this.y = undefined;
     this.gap = undefined;
     this.speed = 1;
+    this.scored = false;
 
     // * Sprite range width should be 120 to 170 ||138(Default)
   }
@@ -101,9 +102,10 @@ class LoadPipeSprite extends SpriteLoader {
 
     // * Checks if pipes are off screen
     if (this.x + this.width < 0) {
-      this.x = canvas.width; // t Resets horizontal position
-      this.y = undefined; // t Allows clacY() to reset position
-      this.gap = undefined; // t Allows clacGap() to reset gap
+      this.x = canvas.width; //t Resets horizontal position
+      this.y = undefined; //t Allows clacY() to reset position
+      this.gap = undefined; //t Allows clacGap() to reset gap
+      this.scored = false;
     }
     return this.x;
   }
@@ -160,6 +162,11 @@ let pipesArray = [];
 let initFirstPipe = false;
 let pipeIndex = 0;
 
+let scores = 0;
+
+const score = new SpriteLoader("images/score.png");
+const restart = new SpriteLoader("images/restart.png");
+
 flappyAutomaticCollisionDetectionAndScoringSystem = () => {
   flappy.renderAnimations(ctx, flappyPositionX, flappyPositionY);
 
@@ -171,45 +178,50 @@ flappyAutomaticCollisionDetectionAndScoringSystem = () => {
   const currentPipe = pipesArray[pipeIndex];
 
   if (currentPipe) {
-    // IF LOOP FIRST CHECKS IF PIPE HAS BEEN INIT
+    const lowerPipeTopEdge = Math.floor(currentPipe.y + currentPipe.gap);
+    const groundHeight = canvas.height - 128;
+    const pipeRightEdge = currentPipe.x + currentPipe.width;
+    // FIRST IF STATEMENT CHECKS IF PIPE HAS BEEN INIT
     // SECOND CONDITION CHECKS IF PIPE HAS PASSED ACTIVATION THRESHOLD
 
-    // console.log(currentPipe, pipesArray);
-
-    // *
     if (currentPipe.x <= threshold) {
-      const lowerPipeTopEdge = Math.floor(currentPipe.y + currentPipe.gap);
-      const groundHeight = canvas.height - 128;
-
       // HANDLES DETECTION OF COLLISION
       if (
         (flapRight >= currentPipe.x && //t Pipe's left edge detection
-          flapRight <= currentPipe.x + currentPipe.width && //t And checks if it is within pipe's width
+          flapRight <= pipeRightEdge && //t And checks if it is within pipe's width
           flapBottom >= lowerPipeTopEdge) || //t Checks y axis of bird does not touch pipe's y axis
         flapTop <= currentPipe.y ||
         flapBottom >= groundHeight //t Handles ground collision detection
       ) {
-        currentPipe.speed = 0;
         stopGame = true;
-      } else {
-        console.log("score");
+      } else if (!currentPipe.scored) {
+        scores++;
+        currentPipe.scored = true;
       }
     }
+    console.log(
+      `pipeRightEdge: ${pipeRightEdge}, flappyPositionX: ${flappyPositionX}`
+    );
+
+    // this resets to the next pipe
 
     // RESETS INDEX
-    if (currentPipe.x + currentPipe.width < flappyPositionY) {
+    if (pipeRightEdge < flappyPositionY) {
       pipeIndex = (pipeIndex + 1) % 2;
     }
-    // *
   }
-
-  // *
 };
 
 // PreLoads Assets
 const assetsPreLoader = async () => {
   try {
-    await Promise.all([background.load(), ground.load(), flappy.load()]);
+    await Promise.all([
+      background.load(),
+      ground.load(),
+      flappy.load(),
+      score.load(),
+      restart.load(),
+    ]);
     gameLoop(); // t Only start gameloop once all ctx are loaded
   } catch (error) {
     console.error(error);
@@ -252,16 +264,27 @@ const groundFunc = () => {
 const gameLoop = () => {
   background.draw(ctx, 0, -128, canvas.width, canvas.height);
 
-  pipeFunc();
-
   flappyAutomaticCollisionDetectionAndScoringSystem();
+
+  pipeFunc();
 
   groundFunc();
 
+  console.log(scores);
   // ! probably temp solution???
-  if (!stopGame) {
+  if (stopGame) {
+    gameOver();
+  } else {
     requestAnimationFrame(gameLoop);
   }
+};
+
+const gameOver = () => {
+  score.draw(ctx, 264, 286);
+  restart.draw(ctx, 243, 534);
+  console.log(scores);
+
+  requestAnimationFrame(gameOver);
 };
 
 assetsPreLoader();

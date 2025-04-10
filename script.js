@@ -42,7 +42,6 @@ class LoadBirdSprite extends SpriteLoader {
   constructor(source) {
     super(source);
 
-    this.spriteWidth = 92;
     this.sourceX = 0;
 
     this.frameWidth = 92; // t Controls the width of each frame
@@ -56,13 +55,13 @@ class LoadBirdSprite extends SpriteLoader {
   }
 
   updateFramesIndex() {
-    this.framesUpdateCounter++;
+    this.framesUpdateCounter++; // t Only update when looped 12 times
 
     if (this.framesUpdateCounter >= this.framesDelay) {
-      this.sourceX = this.currentSprite * this.spriteWidth; // t Gets the starting point of each sprite
+      this.sourceX = this.currentSprite * this.frameWidth; // t Gets the starting point of each sprite
       this.currentSprite = (this.currentSprite + 1) % this.totalSprite; // t Transition to next frame or reset
 
-      this.framesUpdateCounter = 0;
+      this.framesUpdateCounter = 0; // Resets for next loop
     }
   }
 
@@ -72,7 +71,7 @@ class LoadBirdSprite extends SpriteLoader {
         this.img,
         this.sourceX,
         0,
-        this.spriteWidth,
+        this.frameWidth,
         this.frameHeight,
         x,
         y,
@@ -133,13 +132,12 @@ class LoadPipeSprite extends SpriteLoader {
     let y = this.calcY();
     let gap = this.clacGap(320, 200);
 
-    // t Check if right side of any pipes - left side of generated pipe is less than min gap
     if (this.isLoaded) {
       ctx.save(); // t Save default img before alterations
       ctx.scale(1, -1); // t Flip Vertically
       ctx.drawImage(this.img, x, -y);
       ctx.restore(); // t Resets img before rendering lower pipe
-      this.draw(ctx, x, y + gap); // t Bottom pipe
+      this.draw(ctx, x, y + gap);
     }
   }
 }
@@ -150,7 +148,8 @@ canvas.height = 1000;
 const ctx = canvas.getContext("2d");
 
 const flappy = new LoadBirdSprite("images/bird.png");
-const flappyPosition = 200;
+const flappyPositionX = 200;
+const flappyPositionY = 400;
 const background = new SpriteLoader("images/background.png");
 
 let groundOffset = 0;
@@ -158,8 +157,23 @@ const ground = new SpriteLoader("images/ground.png");
 
 let pipesArray = [];
 let initFirstPipe = false;
-const spawnRegion = 562;
-const pipeWidth = 138;
+
+flappFunc = async () => {
+  flappy.renderAnimations(ctx, flappyPositionX, flappyPositionY);
+
+  const flapTop = flappyPositionY;
+  const flapRight = flappyPositionX + 92;
+  const flapBottom = flappyPositionY + 64;
+  const flapLeft = flappyPositionX;
+
+  pipesArray.forEach((pipe) => {
+    // t this checks if bird is in the pipe coords()
+    // how to make it only if it touches pipe?????
+    if (flapRight >= pipe.x && flapRight <= pipe.x + pipe.width) {
+      console.log("hi");
+    }
+  });
+};
 
 // * PreLoads Assets
 const assetsPreLoader = async () => {
@@ -185,7 +199,7 @@ const pipefunc = async () => {
   }
 
   for (let i = 0; i < pipesArray.length; i++) {
-    if (pipesArray.length < 2 && pipesArray[i].x < flappyPosition) {
+    if (pipesArray.length < 2 && pipesArray[i].x < flappyPositionX) {
       await spawnPipe();
     }
     pipesArray[i].renderPipe(ctx); // t Renders each pipe in array
@@ -199,7 +213,7 @@ const gameLoop = () => {
 
   pipefunc();
 
-  flappy.renderAnimations(ctx, flappyPosition, 400);
+  flappFunc();
 
   // ! Ground logic
   for (let x = -groundOffset; x < canvas.width; x += ground.img.width) {
@@ -220,7 +234,7 @@ assetsPreLoader();
 // ? Integrate keyboard (space bar) touch events (mobile)
 // Provide immediate visual and audio feedback for events (collision, and game-over transitions)
 
-//? obstacle generation (pipes) with varying gaps and positions. (increase difficulty as score increases)
+//? obstacle generation (pipes) with varying gaps(increase difficulty as score increases)
 // Implement a scoring system.
 
 // ! Testing

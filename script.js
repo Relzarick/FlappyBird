@@ -32,7 +32,7 @@ class SpriteLoader {
     if (this.isLoaded) {
       ctx.drawImage(this.img, x, y, width, height);
     } else if (!this.isLogged) {
-      console.log(`${this.src} is not loaded`); // t Logs which img is not loading
+      console.log(`${this.src} is not loaded`); // t Logs if not loading
       this.isLogged = true;
     }
   }
@@ -90,7 +90,7 @@ class LoadPipeSprite extends SpriteLoader {
     this.x = canvas.width;
     this.y = undefined;
     this.gap = undefined;
-    this.speed = 2;
+    this.speed = 0;
 
     // * Sprite range width should be 120 to 170 ||138(Default)
   }
@@ -130,7 +130,7 @@ class LoadPipeSprite extends SpriteLoader {
   renderPipe(ctx) {
     let x = this.calcX();
     let y = this.calcY();
-    let gap = this.clacGap(320, 200);
+    let gap = this.clacGap(320, 220);
 
     if (this.isLoaded) {
       ctx.save(); // t Save default img before alterations
@@ -158,7 +158,7 @@ const ground = new SpriteLoader("images/ground.png");
 let pipesArray = [];
 let initFirstPipe = false;
 
-flappFunc = async () => {
+flappyAutomaticCollisionDetectionAndScoringSystem = () => {
   flappy.renderAnimations(ctx, flappyPositionX, flappyPositionY);
 
   const flapTop = flappyPositionY;
@@ -167,15 +167,25 @@ flappFunc = async () => {
   const flapLeft = flappyPositionX;
 
   pipesArray.forEach((pipe) => {
-    // t this checks if bird is in the pipe coords()
-    // how to make it only if it touches pipe?????
-    if (flapRight >= pipe.x && flapRight <= pipe.x + pipe.width) {
-      console.log("hi");
+    const lowerPipeTopEdge = Math.floor(pipe.y + pipe.gap);
+    const groundHeight = canvas.height - 128;
+
+    if (
+      (flapRight >= pipe.x && //t Pipe's left edge detection
+        flapRight <= pipe.x + pipe.width) || //t And checks if it is within pipe's width
+      (flapBottom < lowerPipeTopEdge && flapTop > pipe.y) || //t Checks y axis of bird does not touch pipe's y axis
+      flapBottom >= groundHeight // Handles ground collision detection
+    ) {
+      console.log("score");
+    } else {
+      console.log("collision");
     }
+
+    // *
   });
 };
 
-// * PreLoads Assets
+// PreLoads Assets
 const assetsPreLoader = async () => {
   try {
     await Promise.all([background.load(), ground.load(), flappy.load()]);
@@ -185,7 +195,7 @@ const assetsPreLoader = async () => {
   }
 };
 
-// * Creates new pipe classes and pushes to array
+// Creates new pipe classes and pushes to array
 const spawnPipe = async () => {
   const newPipe = new LoadPipeSprite("images/pipe.png");
   await newPipe.load();
@@ -206,14 +216,14 @@ const pipefunc = async () => {
   }
 };
 
-// * Game Looping Logic
-//  Order in which ctx are drawn determines the Z index
+//  Game Looping Logic
+// ? Order in which ctx are drawn determines the Z index
 const gameLoop = () => {
   background.draw(ctx, 0, -128, canvas.width, canvas.height);
 
   pipefunc();
 
-  flappFunc();
+  flappyAutomaticCollisionDetectionAndScoringSystem();
 
   // ! Ground logic
   for (let x = -groundOffset; x < canvas.width; x += ground.img.width) {

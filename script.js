@@ -145,27 +145,103 @@ class LoadPipeSprite extends SpriteLoader {
 }
 
 const canvas = document.querySelector("#canvas");
+const ctx = canvas.getContext("2d");
 canvas.width = 700;
 canvas.height = 1000;
-const ctx = canvas.getContext("2d");
 
 const flappy = new LoadBirdSprite("images/bird.png");
 const flappyPositionX = 200;
 const flappyPositionY = 400;
+
 const background = new SpriteLoader("images/background.png");
 
-let groundOffset = 0;
 const ground = new SpriteLoader("images/ground.png");
-let stopGame = false;
+let groundOffset = 0;
 
 let pipesArray = [];
-let initFirstPipe = false;
 let pipeIndex = 0;
 
+let initFirstPipe = false;
+
 let scores = 0;
+let stopGame = false;
 
 const score = new SpriteLoader("images/score.png");
 const restart = new SpriteLoader("images/restart.png");
+
+// PreLoads Assets
+const assetsPreLoader = async () => {
+  try {
+    await Promise.all([
+      background.load(),
+      ground.load(),
+      flappy.load(),
+      score.load(),
+      restart.load(),
+    ]);
+    gameLoop(); // t Only start gameloop once all ctx are loaded
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+//  Game Looping Logic
+// ? Order in which ctx are drawn determines the Z index
+const gameLoop = () => {
+  background.draw(ctx, 0, -128, canvas.width, canvas.height);
+
+  flappyAutomaticCollisionDetectionAndScoringSystem();
+  pipeFunc();
+  groundFunc();
+
+  if (stopGame) {
+    gameOver();
+  } else {
+    requestAnimationFrame(gameLoop);
+  }
+};
+
+const gameOver = () => {
+  score.draw(ctx, 264, 286);
+  renderScore(ctx, scores);
+
+  restart.draw(ctx, 243, 534);
+
+  requestAnimationFrame(gameOver);
+};
+
+assetsPreLoader();
+
+// Creates new pipe classes and pushes to array
+const spawnPipe = async () => {
+  const newPipe = new LoadPipeSprite("images/pipe.png");
+  await newPipe.load();
+  pipesArray.push(newPipe);
+};
+
+const pipeFunc = async () => {
+  if (!initFirstPipe) {
+    initFirstPipe = true;
+    await spawnPipe(); // t Adds the first pipe into array
+  }
+
+  for (let i = 0; i < pipesArray.length; i++) {
+    if (pipesArray.length < 2 && pipesArray[i].x < flappyPositionX) {
+      await spawnPipe();
+    }
+    pipesArray[i].renderPipe(ctx); // t Renders each pipe in array
+  }
+};
+
+const groundFunc = () => {
+  for (let x = -groundOffset; x < canvas.width; x += ground.img.width) {
+    ground.draw(ctx, x, canvas.height - ground.img.height); // t Redraws the ground sprite to cover entire width
+  }
+
+  if (!stopGame) {
+    groundOffset = (groundOffset + 1) % ground.img.width; // t Determines speed
+  }
+};
 
 flappyAutomaticCollisionDetectionAndScoringSystem = () => {
   flappy.renderAnimations(ctx, flappyPositionX, flappyPositionY);
@@ -208,80 +284,27 @@ flappyAutomaticCollisionDetectionAndScoringSystem = () => {
   }
 };
 
-// PreLoads Assets
-const assetsPreLoader = async () => {
-  try {
-    await Promise.all([
-      background.load(),
-      ground.load(),
-      flappy.load(),
-      score.load(),
-      restart.load(),
-    ]);
-    gameLoop(); // t Only start gameloop once all ctx are loaded
-  } catch (error) {
-    console.error(error);
-  }
+const renderScore = (ctx, num) => {
+  const scoreX = 264;
+  const scoreY = 263;
+  const scoreWidth = 172;
+  const scoreHeight = 228;
+
+  ctx.font = "bold 50px Arial";
+  ctx.fillStyle = "#FFFFFF";
+  ctx.strokeStyle = "#000000";
+  ctx.lineWidth = 2;
+
+  // Sets render point to center
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  const x = scoreX + scoreWidth / 2; // Center horizontally
+  const y = scoreY + scoreHeight / 2; // Center vertically
+
+  ctx.fillText(num, x, y);
+  ctx.strokeText(num, x, y);
 };
-
-// Creates new pipe classes and pushes to array
-const spawnPipe = async () => {
-  const newPipe = new LoadPipeSprite("images/pipe.png");
-  await newPipe.load();
-  pipesArray.push(newPipe);
-};
-
-const pipeFunc = async () => {
-  if (!initFirstPipe) {
-    initFirstPipe = true;
-    await spawnPipe(); // t Adds the first pipe into array
-  }
-
-  for (let i = 0; i < pipesArray.length; i++) {
-    if (pipesArray.length < 2 && pipesArray[i].x < flappyPositionX) {
-      await spawnPipe();
-    }
-    pipesArray[i].renderPipe(ctx); // t Renders each pipe in array
-  }
-};
-
-const groundFunc = () => {
-  for (let x = -groundOffset; x < canvas.width; x += ground.img.width) {
-    ground.draw(ctx, x, canvas.height - ground.img.height); // t Redraws the ground sprite to cover entire width
-  }
-
-  if (!stopGame) {
-    groundOffset = (groundOffset + 1) % ground.img.width; // t Determines speed
-  }
-};
-
-//  Game Looping Logic
-// ? Order in which ctx are drawn determines the Z index
-const gameLoop = () => {
-  background.draw(ctx, 0, -128, canvas.width, canvas.height);
-
-  flappyAutomaticCollisionDetectionAndScoringSystem();
-
-  pipeFunc();
-
-  groundFunc();
-
-  if (stopGame) {
-    gameOver();
-  } else {
-    requestAnimationFrame(gameLoop);
-  }
-};
-
-const gameOver = () => {
-  score.draw(ctx, 264, 286);
-  restart.draw(ctx, 243, 534);
-  console.log(scores);
-
-  requestAnimationFrame(gameOver);
-};
-
-assetsPreLoader();
 
 // ! Development Guidelines
 //? Define the core mechanics: the bird’s movement (flap, gravity, drop)

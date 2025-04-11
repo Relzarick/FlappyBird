@@ -151,7 +151,7 @@ canvas.height = 1000;
 
 const flappy = new LoadBirdSprite("images/bird.png");
 const flappyPositionX = 200;
-const flappyPositionY = 400;
+let flappyPositionY = 400;
 
 const background = new SpriteLoader("images/background.png");
 
@@ -165,9 +165,12 @@ let initFirstPipe = false;
 
 let scores = 0;
 let stopGame = false;
+let restartGame = false;
 
 const score = new SpriteLoader("images/score.png");
 const restart = new SpriteLoader("images/restart.png");
+
+const rect = canvas.getBoundingClientRect(); //? This gets coordinates for canvas not browser
 
 // PreLoads Assets
 const assetsPreLoader = async () => {
@@ -202,12 +205,13 @@ const gameLoop = () => {
 };
 
 const gameOver = () => {
-  score.draw(ctx, 264, 286);
-  renderScore(ctx, scores);
+  if (!restartGame) {
+    score.draw(ctx, 264, 286);
+    renderScore(ctx, scores);
+    restart.draw(ctx, 243, 534);
 
-  restart.draw(ctx, 243, 534);
-
-  requestAnimationFrame(gameOver);
+    requestAnimationFrame(gameOver);
+  }
 };
 
 assetsPreLoader();
@@ -316,6 +320,34 @@ const renderScore = (ctx, num) => {
   ctx.fillText(bestScore, x, y + 90);
   ctx.strokeText(bestScore, x, y + 90);
 };
+
+const gameReset = () => {
+  restartGame = false;
+  stopGame = false;
+  scores = 0;
+  pipeIndex = 0;
+  pipesArray = [];
+  initFirstPipe = false;
+  flappyPositionY = 400;
+};
+
+canvas.addEventListener("click", (e) => {
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
+
+  if (
+    stopGame &&
+    mouseX >= 243 &&
+    mouseX <= 457 &&
+    mouseY >= 534 &&
+    mouseY <= 609
+  ) {
+    restartGame = true;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    gameReset();
+    gameLoop();
+  }
+});
 
 // ! Development Guidelines
 //? Define the core mechanics: the bird’s movement (flap, gravity, drop)

@@ -302,8 +302,19 @@ const renderScore = (ctx, num) => {
   const x = scoreX + scoreWidth / 2; // Center horizontally
   const y = scoreY + scoreHeight / 2; // Center vertically
 
+  const bestScore = parseInt(localStorage.getItem("score"));
+
+  if (isNaN(bestScore) || num > bestScore) {
+    localStorage.setItem("score", num);
+  }
+
+  //* RENDERS SCORE
   ctx.fillText(num, x, y);
   ctx.strokeText(num, x, y);
+
+  //* RENDERS BEST
+  ctx.fillText(bestScore, x, y + 90);
+  ctx.strokeText(bestScore, x, y + 90);
 };
 
 // ! Development Guidelines
@@ -315,7 +326,6 @@ const renderScore = (ctx, num) => {
 // Provide immediate visual and audio feedback for events (collision, and game-over transitions)
 
 //? obstacle generation (pipes) with varying gaps(increase difficulty as score increases)
-// Implement a scoring system.
 
 // ! Testing
 //Verify transitions between game states (start, playing, game over, restart) occur correctly.

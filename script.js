@@ -194,19 +194,15 @@ flappyAutomaticCollisionDetectionAndScoringSystem = () => {
         flapBottom >= groundHeight //t Handles ground collision detection
       ) {
         stopGame = true;
-      } else if (!currentPipe.scored) {
+      }
+      if (!currentPipe.scored && flappyPositionX >= pipeRightEdge) {
         scores++;
         currentPipe.scored = true;
       }
     }
-    console.log(
-      `pipeRightEdge: ${pipeRightEdge}, flappyPositionX: ${flappyPositionX}`
-    );
-
-    // this resets to the next pipe
 
     // RESETS INDEX
-    if (pipeRightEdge < flappyPositionY) {
+    if (pipeRightEdge + 10 < flappyPositionX) {
       pipeIndex = (pipeIndex + 1) % 2;
     }
   }
@@ -270,8 +266,6 @@ const gameLoop = () => {
 
   groundFunc();
 
-  console.log(scores);
-  // ! probably temp solution???
   if (stopGame) {
     gameOver();
   } else {

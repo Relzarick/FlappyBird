@@ -90,15 +90,14 @@ class LoadPipeSprite extends SpriteLoader {
     this.x = canvas.width;
     this.y = undefined;
     this.gap = undefined;
-    this.speed = 1;
     this.scored = false;
 
     // * Sprite range width should be 120 to 170 ||138(Default)
   }
 
   // * Handles the calculation for shifting pipes from right to left
-  calcX() {
-    this.x -= this.speed; // t Moves pipe leftward
+  calcX(speed) {
+    this.x -= speed; // t Moves pipe leftward
 
     // * Checks if pipes are off screen
     if (this.x + this.width < 0) {
@@ -126,11 +125,8 @@ class LoadPipeSprite extends SpriteLoader {
     return this.gap;
   }
 
-  // * Will be used to determine speed scaling it with score
-  calcSpeed() {}
-
   renderPipe(ctx) {
-    let x = this.calcX();
+    let x = this.calcX(speed);
     let y = this.calcY();
     let gap = this.clacGap(320, 220);
 
@@ -149,18 +145,19 @@ const ctx = canvas.getContext("2d");
 canvas.width = 700;
 canvas.height = 1000;
 
+const background = new SpriteLoader("images/background.png");
+
+let speed = 1;
+
 const flappy = new LoadBirdSprite("images/bird.png");
 const flappyPositionX = 200;
 let flappyPositionY = 400;
-
-const background = new SpriteLoader("images/background.png");
 
 const ground = new SpriteLoader("images/ground.png");
 let groundOffset = 0;
 
 let pipesArray = [];
 let pipeIndex = 0;
-
 let initFirstPipe = false;
 
 let scores = 0;
@@ -195,8 +192,9 @@ const gameLoop = () => {
   background.draw(ctx, 0, -128, canvas.width, canvas.height);
 
   flappyAutomaticCollisionDetectionAndScoringSystem();
+  calcSpeed();
   pipeFunc();
-  groundFunc();
+  groundFunc(speed);
 
   if (stopGame) {
     gameOver();
@@ -219,6 +217,7 @@ const gameReset = () => {
   restartGame = false;
   stopGame = false;
   scores = 0;
+  speed = 1;
   pipeIndex = 0;
   pipesArray = [];
   initFirstPipe = false;
@@ -226,9 +225,22 @@ const gameReset = () => {
 };
 
 const gameStart = () => {
-  background.draw(ctx, 0, -128, canvas.width, canvas.height);
-  flappy.renderAnimations(ctx, flappyPositionX, flappyPositionY);
-  groundFunc();
+  if (!startGame) {
+    background.draw(ctx, 0, -128, canvas.width, canvas.height);
+    flappy.renderAnimations(ctx, flappyPositionX, flappyPositionY);
+    groundFunc(0.5);
+
+    const text = "Click to flapp!";
+    ctx.font = ctx.font = "bold 70px Arial";
+    ctx.fillStyle = "#FFFFFF";
+    ctx.lineWidth = 2;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, canvas.width / 2, 250);
+    ctx.strokeText(text, canvas.width / 2, 250);
+
+    requestAnimationFrame(gameStart);
+  }
 };
 
 assetsPreLoader();
@@ -254,13 +266,19 @@ const pipeFunc = async () => {
   }
 };
 
-const groundFunc = () => {
+const groundFunc = (num) => {
   for (let x = -groundOffset; x < canvas.width; x += ground.img.width) {
     ground.draw(ctx, x, canvas.height - ground.img.height); // t Redraws the ground sprite to cover entire width
   }
 
   if (!stopGame) {
-    groundOffset = (groundOffset + 1) % ground.img.width; // t Determines speed
+    groundOffset = (groundOffset + num) % ground.img.width; // t Determines speed
+  }
+};
+
+const calcSpeed = () => {
+  if (scores % 5 === 0) {
+    speed + 0.5; // * Determines speed, scaling it with score
   }
 };
 
@@ -313,7 +331,6 @@ const renderScore = (ctx, num) => {
 
   ctx.font = "bold 50px Arial";
   ctx.fillStyle = "#FFFFFF";
-  ctx.strokeStyle = "#000000";
   ctx.lineWidth = 2;
 
   // Sets render point to center

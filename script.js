@@ -166,6 +166,7 @@ let initFirstPipe = false;
 let scores = 0;
 let stopGame = false;
 let restartGame = false;
+let startGame = false;
 
 const score = new SpriteLoader("images/score.png");
 const restart = new SpriteLoader("images/restart.png");
@@ -182,7 +183,7 @@ const assetsPreLoader = async () => {
       score.load(),
       restart.load(),
     ]);
-    gameLoop(); // t Only start gameloop once all ctx are loaded
+    gameStart(); // t Only start gameloop once all ctx are loaded
   } catch (error) {
     console.error(error);
   }
@@ -212,6 +213,22 @@ const gameOver = () => {
 
     requestAnimationFrame(gameOver);
   }
+};
+
+const gameReset = () => {
+  restartGame = false;
+  stopGame = false;
+  scores = 0;
+  pipeIndex = 0;
+  pipesArray = [];
+  initFirstPipe = false;
+  flappyPositionY = 400;
+};
+
+const gameStart = () => {
+  background.draw(ctx, 0, -128, canvas.width, canvas.height);
+  flappy.renderAnimations(ctx, flappyPositionX, flappyPositionY);
+  groundFunc();
 };
 
 assetsPreLoader();
@@ -321,21 +338,14 @@ const renderScore = (ctx, num) => {
   ctx.strokeText(bestScore, x, y + 90);
 };
 
-const gameReset = () => {
-  restartGame = false;
-  stopGame = false;
-  scores = 0;
-  pipeIndex = 0;
-  pipesArray = [];
-  initFirstPipe = false;
-  flappyPositionY = 400;
-};
-
 canvas.addEventListener("click", (e) => {
   const mouseX = e.clientX - rect.left;
   const mouseY = e.clientY - rect.top;
 
-  if (
+  if (!startGame) {
+    gameLoop();
+    startGame = true;
+  } else if (
     stopGame &&
     mouseX >= 243 &&
     mouseX <= 457 &&

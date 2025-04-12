@@ -195,6 +195,7 @@ const gameLoop = () => {
   calcSpeed();
   pipeFunc();
   groundFunc(speed);
+  gravity();
 
   if (stopGame) {
     gameOver();
@@ -282,6 +283,10 @@ const calcSpeed = () => {
   }
 };
 
+const gravity = () => {
+  flappyPositionY += 1.5;
+};
+
 flappyAutomaticCollisionDetectionAndScoringSystem = () => {
   flappy.renderAnimations(ctx, flappyPositionX, flappyPositionY);
 
@@ -299,14 +304,17 @@ flappyAutomaticCollisionDetectionAndScoringSystem = () => {
     // FIRST IF STATEMENT CHECKS IF PIPE HAS BEEN INIT
     // SECOND CONDITION CHECKS IF PIPE HAS PASSED ACTIVATION THRESHOLD
 
+    if (flapBottom >= groundHeight) {
+      stopGame = true; //t Handles ground collision detection
+    }
+
     if (currentPipe.x <= threshold) {
-      // HANDLES DETECTION OF COLLISION
+      // HANDLES DETECTION WITH PIPE
       if (
         (flapRight >= currentPipe.x && //t Pipe's left edge detection
           flapRight <= pipeRightEdge && //t And checks if it is within pipe's width
           flapBottom >= lowerPipeTopEdge) || //t Checks y axis of bird does not touch pipe's y axis
-        flapTop <= currentPipe.y ||
-        flapBottom >= groundHeight //t Handles ground collision detection
+        flapTop <= currentPipe.y
       ) {
         stopGame = true;
       }
@@ -358,6 +366,16 @@ const renderScore = (ctx, num) => {
 canvas.addEventListener("click", (e) => {
   const mouseX = e.clientX - rect.left;
   const mouseY = e.clientY - rect.top;
+
+  const btnX = 243;
+  const btnWidth = 214;
+  const btnY = 534;
+  const btnHeight = 75;
+  // console.log(mouseX, mouseY);
+
+  if (flappyPositionY >= 64) {
+    flappyPositionY -= 80;
+  }
 
   if (!startGame) {
     gameLoop();

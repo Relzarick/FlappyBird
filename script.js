@@ -160,6 +160,9 @@ let pipesArray = [];
 let pipeIndex = 0;
 let initFirstPipe = false;
 
+let velocity = 0; // Starting velocity
+const gravityForce = 0.07; // Acceleration due to gravity
+
 let scores = 0;
 let stopGame = false;
 let restartGame = false;
@@ -223,6 +226,7 @@ const gameReset = () => {
   pipesArray = [];
   initFirstPipe = false;
   flappyPositionY = 400;
+  velocity = 0;
 };
 
 const gameStart = () => {
@@ -279,19 +283,20 @@ const groundFunc = (num) => {
 
 const calcSpeed = () => {
   if (scores % 5 === 0) {
-    speed + 0.5; // * Determines speed, scaling it with score
+    speed + 1; // * Determines speed, scaling it with score
   }
 };
 
 const gravity = () => {
-  flappyPositionY += 1.5;
+  velocity += gravityForce;
+  flappyPositionY += velocity;
 };
 
 flappyAutomaticCollisionDetectionAndScoringSystem = () => {
   flappy.renderAnimations(ctx, flappyPositionX, flappyPositionY);
 
   const flapTop = flappyPositionY;
-  const flapRight = flappyPositionX + 80;
+  const flapRight = flappyPositionX + 59;
   const flapBottom = flappyPositionY + 64;
 
   const threshold = flapRight + 30;
@@ -314,7 +319,10 @@ flappyAutomaticCollisionDetectionAndScoringSystem = () => {
         (flapRight >= currentPipe.x && //t Pipe's left edge detection
           flapRight <= pipeRightEdge && //t And checks if it is within pipe's width
           flapBottom >= lowerPipeTopEdge) || //t Checks y axis of bird does not touch pipe's y axis
-        flapTop <= currentPipe.y
+        flapTop <= currentPipe.y || //t Check collision with inverted pipe
+        (flappyPositionX <= pipeRightEdge && //? Checks if bird is in pipe
+          flappyPositionX >= currentPipe.x && //? Checks if bird is in pipe
+          flapBottom >= lowerPipeTopEdge) //? Check if Y axis dont touch
       ) {
         stopGame = true;
       }
@@ -374,7 +382,7 @@ canvas.addEventListener("click", (e) => {
   // console.log(mouseX, mouseY);
 
   if (flappyPositionY >= 64) {
-    flappyPositionY -= 80;
+    velocity = -3;
   }
 
   if (!startGame) {

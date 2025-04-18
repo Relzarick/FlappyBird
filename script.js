@@ -296,7 +296,7 @@ flappyAutomaticCollisionDetectionAndScoringSystem = () => {
   flappy.renderAnimations(ctx, flappyPositionX, flappyPositionY);
 
   const flapTop = flappyPositionY;
-  const flapRight = flappyPositionX + 59;
+  const flapRight = flappyPositionX + 92;
   const flapBottom = flappyPositionY + 64;
 
   const threshold = flapRight + 30;
